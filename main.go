@@ -59,7 +59,7 @@ func SheetsExportHTTP(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "error: no access to sheet, ensure that %s have reader access to the document", getEnvOrDefault("SVC_ACC_EMAIL", "service account"))
 			return
 		}
-		fmt.Fprintf(w, "unable to find password-tab: "+passwordSheet+"; ensure it exists to grant read access: %#v", err)
+		fmt.Fprintf(w, "unable to find password-tab: "+passwordSheet+"; ensure it exists to grant read access: %v", err)
 		return
 	}
 	if len(resp.Values) == 0 {
