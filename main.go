@@ -93,8 +93,9 @@ func SheetsExportHTTP(w http.ResponseWriter, r *http.Request) {
 // authentication & authorization have passed successfully.
 func exportSheet(w http.ResponseWriter, r *http.Request, srv *sheets.Service, spreadsheetID, readRange string) {
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
-	if err != nil {
+	if err != nil || resp.Values == nil{
 		fmt.Fprintf(w, "Unable to retrieve data from sheet: %v", err)
+		return
 	}
 
 	// TODO: More export formats?
