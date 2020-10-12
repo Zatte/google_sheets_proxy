@@ -84,7 +84,7 @@ func SheetsExportHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for index, row := range resp.Values {
 		if index == 0 {
-			if len(row) != 3 || row[0] != "User" || row[1] != "Password" || row[2] != "Sheet" {
+			if len(row) != 3 || row[0] != "User" || row[1] != "Password" || row[2] != "Range" {
 				w.WriteHeader(401)
 				fmt.Fprintf(w, "incorrect username headers; expected User/Password/Sheet (Exactly)")
 				return
