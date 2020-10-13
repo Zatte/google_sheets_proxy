@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
-	"os"
 
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/api/sheets/v4"
@@ -36,7 +36,7 @@ func main() {
 	s := &http.Server{
 		Addr:           ":8080",
 		Handler:        http.HandlerFunc(SheetsExportHTTP),
-		ReadTimeout:    10 * time.Second,
+		ReadTimeout:    30 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
@@ -107,7 +107,7 @@ func SheetsExportHTTP(w http.ResponseWriter, r *http.Request) {
 // authentication & authorization have passed successfully.
 func exportSheet(w http.ResponseWriter, r *http.Request, srv *sheets.Service, spreadsheetID, readRange string) {
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
-	if err != nil || resp.Values == nil{
+	if err != nil || resp.Values == nil {
 		fmt.Fprintf(w, "Unable to retrieve data from sheet: %v", err)
 		return
 	}
