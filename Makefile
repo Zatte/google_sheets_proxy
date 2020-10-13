@@ -127,8 +127,10 @@ deploy-gcp-cloud-function:
 		--trigger-http \
 		--allow-unauthenticated \
 		--region=europe-west3 \
-		--set-env-vars SALT=$(shell cat secretSalt),SVC_ACC_EMAIL=service-$(GCP_PROJECT)@gcf-admin-robot.iam.gserviceaccount.com 
-		
+		--project $(GCP_PROJECT) \
+		--set-env-vars SALT=$(shell cat secretSalt),SVC_ACC_EMAIL=$(SERVICE_ACC_EMAIL) \
+		--service-account=$(SERVICE_ACC_EMAIL)
+
 
 # Cleaing
 # =======================
