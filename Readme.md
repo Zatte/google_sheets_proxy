@@ -20,15 +20,28 @@ limitations under the License.
 ## Usage
 To share an access to a document through this service, there is a double opt-in required. 1 Granting the service access to read the whole document. 2) defining what ranges different (BasicAuth) users should be able to access.
 
-1) Any document you want to share through the service; add the service-account email as an (viewer) user; the default service-account email is `google-sheets-proxy@[gcp-project-id].iam.gserviceaccount.com`
+1) In the document you want to share; add the service-account email as an (viewer) user; the default service-account email is `google-sheets-proxy@${GCP_PROJECT}.iam.gserviceaccount.com`
 2) Query the endpoint with `?sheetId=........` set to the ID of the google sheet you want to make public under Basic Auth. Provide any BasicAuth Credientials 
-`curl test:test@https://europe-west3-${GCP_PROJECT}.cloudfunctions.net/GoogleSheetProxy?sheedId=............`
-3) The endpoint will return an error `unable to find password-tab: 9a94f6.......ca7087_allowed_logins` ;
-4) ensure the tab-name from #4 it exists and is unique to each document id; changing the document ID (as with copies) requires a new tab; The tab must contains 3 columns "User", "Password", "Range". Password must be a valid [bcrypt](https://bcrypt-generator.com/) password and the Range must be a valid reference (e.g. `Sheet1!A:C`). The service will return the first use/pass match and export the range. 
 
-Output format default to JSON but can be changed to csv with `Accept-Content: application/csv` - Header
+`curl test:test@https://europe-west3-${GCP_PROJECT}.cloudfunctions.net/GoogleSheetProxy?sheedId=............`
+
+3) The endpoint will likely return an error `unable to find password-tab: 9a94f6.......ca7087_allowed_logins` ;
+4) ensure the tab-name from #4 it exists. The name is unique to each document id; changing the document ID (as with copies) requires a new tab; The tab must contains 3 columns "User", "Password", "Range". Password must be a valid [bcrypt](https://bcrypt-generator.com/) password and the Range must be a valid reference (e.g. `Sheet1!A:C`). The service will return the first use/pass match and export the range. 
+
+Output format default to JSON but can be changed to csv with an `Accept-Content: application/csv` - Header
 
 Not tested for production use; only a proof of concept.
+
+
+## Example
+This document is public for demo-purposes but the export would work the same if it was not. As long as the service-account email has acccess to the document it will work.
+[https://docs.google.com/spreadsheets/d/1xUf5-FQBig7eJHjVG0DHdnREltn4bNeTNMxAgtJ6SHs/edit#gid=0](https://docs.google.com/spreadsheets/d/1xUf5-FQBig7eJHjVG0DHdnREltn4bNeTNMxAgtJ6SHs/edit#gid=0
+)
+
+Basic auth protected export are available (controlled by the tab `5a418c78f531a18aca5c4733ec665b93_allowed_logins` in the above document) with users test:test(exposes col A:C) and test2:test(exposes column C:C)
+[https://europe-west3-kvantic-dev-rapp.cloudfunctions.net/GoogleSheetProxy?sheetId=1xUf5-FQBig7eJHjVG0DHdnREltn4bNeTNMxAgtJ6SHs](https://europe-west3-kvantic-dev-rapp.cloudfunctions.net/GoogleSheetProxy?sheetId=1xUf5-FQBig7eJHjVG0DHdnREltn4bNeTNMxAgtJ6SHs
+)
+
 
 ## Installation - Google Cloud functions
 
