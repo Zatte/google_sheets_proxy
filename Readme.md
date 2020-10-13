@@ -1,6 +1,6 @@
 # Google sheets (basic auth) proxy
 
-Simple POC of adding basic auth protection to google sheets exports (as this is not provided natively). Can be deployed as a cloud function to be serverless.
+Simple POC of adding basic auth protection to google sheets exports (as this is not provided natively). Can be deployed as a cloud function or to be serverless. A slightly better alternative to publishing documents completely open.
 
 ## License
 Copyright 2020 Mikael Rapp
@@ -17,14 +17,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-## Usage / Installation
+## Usage
+To share an access to a document through this service, there is a double opt-in required. 1 Granting the service access to read the whole document. 2) defining what ranges different (BasicAuth) users should be able to access.
 
-To use the service you need to:
-0) Enable the sheets API in you GCP project
-1) Deploy the service with a google application service account that have permissions to work with the Sheets API
-2) Any document you want to share through the service; add the service-account email as an (viewer) user.
-3) Query the endpoint with `?sheetId=........` set to the id
-4) The endpoint will return an error `unable to find password-tab: 9a94f6.......ca7087_allowed_logins` ;
-5) ensure the tab-name from #4 it exists (this is a document-specific opt in for public sharing); Create a tab with that name containging 3 columns "User", "Password", "Range". User will be the Basic Auth user-name; Password must be a valid [bcrypt](https://bcrypt-generator.com/) password and the range contains a range reference that will be exported, including sheetName, e.g `Sheet1!A:C`
+1) Any document you want to share through the service; add the service-account email as an (viewer) user; the default service-account email is `google-sheets-proxy@[gcp-project-id].iam.gserviceaccount.com`
+2) Query the endpoint with `?sheetId=........` set to the ID of the google sheet you want to make public under Basic Auth. Provide any BasicAuth Credientials 
+`curl test:test@https://europe-west3-${GCP_PROJECT}.cloudfunctions.net/GoogleSheetProxy?sheedId=............`
+3) The endpoint will return an error `unable to find password-tab: 9a94f6.......ca7087_allowed_logins` ;
+4) ensure the tab-name from #4 it exists and is unique to each document id; changing the document ID (as with copies) requires a new tab; The tab must contains 3 columns "User", "Password", "Range". Password must be a valid [bcrypt](https://bcrypt-generator.com/) password and the Range must be a valid reference (e.g. `Sheet1!A:C`). The service will return the first use/pass match and export the range. 
+
+Output format default to JSON but can be changed to csv with `Accept-Content: application/csv` - Header
 
 Not tested for production use; only a proof of concept.
+
+## Installation - Google Cloud functions
+
+0) Enable the sheets API in you GCP project
+1) Deploy the service (requires an authenticated google cloud cli)
+`make service-account`
+`make deploy-gcp-cloud-function`
+
+## NB
+THIS IS A PRROF OF CONCEPT
+
+1) No rate limits implemented so brute force attacks could rack up high (sheets) API costs or hit rate limits causing DOS.
+2) No domain lock, the service will access any document that is shared with it no matter who owns it in whoever organization.
+3) Ensure your passwords are random, at least 20 characters alpha-numeric length, this is mean for machine to machine communication, no point in having weak passwords.
+4) Yes, "export" users and passwords are vissible (though bcrypted) to all who have access to the exported document. This is a flexibility/security tradeoff you might want to consider if it works in your context.

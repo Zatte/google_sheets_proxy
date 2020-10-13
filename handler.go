@@ -19,12 +19,16 @@ const defaultHashSalt = "fd1l01nx707ösa0<,öqåU1"
 
 // GoogleSheetProxy is an HTTP Cloud Function interface; can be deployeed serverless in GCP
 func GoogleSheetProxy(w http.ResponseWriter, r *http.Request) {
+	// Require Auth
 	user, password, ok := r.BasicAuth()
 	if !ok {
-		fmt.Fprintf(w, "error: no credentials provided")
+		w.Header().Set("WWW-Authenticate", `Basic realm="Google Sheet Proxy"`)
+		w.WriteHeader(401)
+		w.Write([]byte("Unauthorised.\n"))
 		return
 	}
 
+	// Require ?sheetId=....
 	queryParams := r.URL.Query()
 	spreadsheetID := queryParams.Get("sheetId")
 	if spreadsheetID == "" {
@@ -39,11 +43,11 @@ func GoogleSheetProxy(w http.ResponseWriter, r *http.Request) {
 
 	// Check password
 	passwordSheet := getPasswordSheetName(r.URL.Path)
-	readRange := passwordSheet + "!A1:C"
+	readRange := passwordSheet + "!A1:C" //TODO: move to const
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
 	if err != nil {
-		if strings.Contains(err.Error(), "403") {
-			// TODO: Read out from enviornment context (GOOGLE_APPLICATON_CREDENTIALS file)
+		if strings.Contains(err.Error(), "403") { // TODO: introspect the error rather than string search...uck
+			// TODO: Read out SVC_ACC_EMAIL from enviornment context (GOOGLE_APPLICATON_CREDENTIALS file)
 			fmt.Fprintf(w, "error: no access to sheet, ensure that %s have reader access to the document (%#v)", getEnvOrDefault("SVC_ACC_EMAIL", "service account"), err)
 			return
 		}
@@ -55,7 +59,6 @@ func GoogleSheetProxy(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("no password sheet found, no users exists")
 		return
 	}
-
 	for index, row := range resp.Values {
 		if index == 0 {
 			if len(row) != 3 || row[0] != "User" || row[1] != "Password" || row[2] != "Range" {
@@ -63,9 +66,7 @@ func GoogleSheetProxy(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintf(w, "incorrect username headers; expected User/Password/Range (Exactly)")
 				return
 			}
-			// Note: this is not a constant time password check; might be open to timing attacks
 		} else if row[0] == user && bcrypt.CompareHashAndPassword([]byte(row[1].(string)), []byte(password)) == nil {
-			// Found a match
 			exportSheet(w, r, srv, spreadsheetID, fmt.Sprintf("%s", row[2]))
 			return
 		}
