@@ -88,7 +88,7 @@ func exportSheet(w http.ResponseWriter, r *http.Request, srv *sheets.Service, sp
 	}
 
 	// TODO: More export formats?
-	switch r.Header.Get("Accept-Content") {
+	switch r.Header.Get("Accept") {
 	case "application/csv":
 		w.Header().Add("Content-Type", "application/csv")
 		w := csv.NewWriter(w)
