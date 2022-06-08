@@ -47,8 +47,8 @@ func GoogleSheetProxy(w http.ResponseWriter, r *http.Request) {
 	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
 	if err != nil {
 		if strings.Contains(err.Error(), "403") { // TODO: introspect the error rather than string search...uck
-			// TODO: Read out SVC_ACC_EMAIL from enviornment context (GOOGLE_APPLICATON_CREDENTIALS file)
-			fmt.Fprintf(w, "error: no access to sheet, ensure that %s have reader access to the document (%#v)", getEnvOrDefault("SVC_ACC_EMAIL", "service account"), err)
+			// TODO: Read out SVC_ACC_EMAIL from environment context (GOOGLE_APPLICATION_CREDENTIALS file)
+			fmt.Fprintf(w, "error: no access to sheet, ensure that %s have reader access to the document", getEnvOrDefault("SVC_ACC_EMAIL", "service account"))
 			return
 		}
 		fmt.Fprintf(w, "unable to find password-tab: "+passwordSheet+"; ensure it exists to grant read access: %v", err)
@@ -87,8 +87,17 @@ func exportSheet(w http.ResponseWriter, r *http.Request, srv *sheets.Service, sp
 		return
 	}
 
+	format := ""
+	if r.Header.Get("Accept") != "" {
+		format = r.Header.Get("Accept")
+	}
+
+	if r.URL.Query().Get("export_format") != "" {
+		format = r.URL.Query().Get("export_format")
+	}
+
 	// TODO: More export formats?
-	switch r.Header.Get("Accept") {
+	switch format {
 	case "application/csv":
 		w.Header().Add("Content-Type", "application/csv")
 		w := csv.NewWriter(w)
@@ -101,6 +110,29 @@ func exportSheet(w http.ResponseWriter, r *http.Request, srv *sheets.Service, sp
 		}
 		w.Flush()
 
+	case "json":
+		res := make([]map[string]string, len(resp.Values)-1)
+		headerRow := make([]string, len(resp.Values[0]))
+		for idx, row := range resp.Values {
+			if idx == 0 {
+				for i, cell := range row {
+					headerRow[i] = string(fmt.Sprintf("%s", cell))
+				}
+			} else {
+				jsonObjRow := map[string]string{}
+				for i, header := range headerRow {
+					jsonObjRow[header] = string(fmt.Sprintf("%s", row[i]))
+				}
+				res[idx-1] = jsonObjRow
+			}
+		}
+		w.Header().Add("Content-Type", "application/json")
+		enc := json.NewEncoder(w)
+		enc.Encode(res)
+		return
+
+	case "json_arr":
+		fallthrough
 	case "application/json":
 		fallthrough
 	default:

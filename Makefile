@@ -121,15 +121,16 @@ deploy-gcp-cloud-run: #push
 		# --cluster GCP_CLUSTER \
 		# --platform gke
 
-deploy-gcp-cloud-function: 
+deploy-gcp-cloud-function:
 	gcloud functions deploy GoogleSheetProxy \
-		--runtime go113 \
+		--runtime go116 \
 		--trigger-http \
 		--allow-unauthenticated \
 		--region=europe-west3 \
 		--project $(GCP_PROJECT) \
 		--set-env-vars SALT=$(shell cat secretSalt),SVC_ACC_EMAIL=$(SERVICE_ACC_EMAIL) \
-		--service-account=$(SERVICE_ACC_EMAIL)
+		--service-account=$(SERVICE_ACC_EMAIL) \
+		--max-instances 1
 
 
 # Cleaing
