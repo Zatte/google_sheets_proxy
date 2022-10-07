@@ -111,6 +111,11 @@ func exportSheet(w http.ResponseWriter, r *http.Request, srv *sheets.Service, sp
 		w.Flush()
 
 	case "json":
+		if len(resp.Values) == 0 {
+			w.Header().Add("Content-Type", "application/json")
+			w.Write([]byte("[]"))
+			return
+		}
 		res := make([]map[string]string, len(resp.Values)-1)
 		headerRow := make([]string, len(resp.Values[0]))
 		for idx, row := range resp.Values {

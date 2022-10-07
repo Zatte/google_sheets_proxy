@@ -26,7 +26,7 @@ var Version = "SNAPSHOT"
 
 func main() {
 	s := &http.Server{
-		Addr:           ":8080",
+		Addr:           ":8085",
 		Handler:        http.HandlerFunc(google_sheets_proxy.GoogleSheetProxy),
 		ReadTimeout:    30 * time.Second,
 		WriteTimeout:   10 * time.Second,
