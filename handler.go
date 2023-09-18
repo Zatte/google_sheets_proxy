@@ -126,7 +126,11 @@ func exportSheet(w http.ResponseWriter, r *http.Request, srv *sheets.Service, sp
 			} else {
 				jsonObjRow := map[string]string{}
 				for i, header := range headerRow {
-					jsonObjRow[header] = string(fmt.Sprintf("%s", row[i]))
+					if i < len(row) && row[i] != nil {
+						jsonObjRow[header] = string(fmt.Sprintf("%s", row[i]))
+					} else {
+						jsonObjRow[header] = ""
+					}
 				}
 				res[idx-1] = jsonObjRow
 			}
